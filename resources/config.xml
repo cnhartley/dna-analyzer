@@ -1,0 +1,13 @@
+<configuration lastupdate="05 May 2013">
+
+   <window>
+      <position top="64" left="64" />
+      <size width="640" height="480" />
+   </window>
+   
+   <resources path="resources">
+      <aminoacidslib>resources/aminoacids.xml</aminoacidslib>
+      <nucleotidelib>resources/nucleotide.xml</nucleotidelib>
+   </resources>
+
+</configuration>
