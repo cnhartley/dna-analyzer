@@ -54,18 +54,30 @@ function getSequenceLength(id) {
 }
 function generateSequence(blocks) {
 	var seq = new Array(blocks);
+	var org;//, unpacked;
 	for (var i = 0; i < blocks; i++) {
-		seq[i] = generateSequenceBlock();
-		console.log("pre-pack[" + seq[i] + "]")
-		seq[i] = pack(seq[i]);
-		console.log("post-pack[" + seq[i] + "]")
-		console.log(" -->unpack[" + unpack(seq[i], ['a','c','g','t']) + "]");
+		org = generateSequenceBlock();
+		//console.log("pre-pack[" + org + "]")
+		seq[i] = pack(org);
+		//console.log("post-pack[" + seq[i] + "]")
+		//unpacked = unpack(seq[i], ['a','c','g','t']);
+		//console.log(" -->unpack[" + unpacked + "]");
+		//console.log("test=" + org.toLowerCase());
+		//console.log("     " + unpacked + " => " + stringsAreEqual(org.toLowerCase(), unpacked));
 	}
 	return seq;
 }
+function stringsAreEqual(a,b) {
+	if (a.length != b.length)
+		return false;
+	for (var c = 0; c < a.length; c++)
+		if (a[c] != b[c])
+			return false;
+	return true;
+}
 function generateSequenceBlock() {
 	var dna = ['a','A','c','C','g','G','t','T'];
-	var rna = ['a','A','c','C','g','G','u','U'];
+	//var rna = ['a','A','c','C','g','G','u','U'];
 	var len = 64;
 	var block = "";
 	
@@ -127,7 +139,13 @@ function _paintCanvas(ctx, w, h) {
 	ctx.font = (boxSize - 2) + "px Verdana,monospaced";
     
 	_paintBackground(ctx, w, h);
+	_paintSequencesAndFrame(ctx, w, h);
 
+   	// paint the highlighter after everything else is painted.
+   	_paintMouseHighlighter(ctx, w, h);
+}
+
+function _paintSequencesAndFrame(ctx, w, h) {
     var x = 0;
     var y = (h >> 1) - _boxSizeBy2;
     var currentSeq = seqBlocks[seqBlockIndex] || "";
@@ -151,11 +169,9 @@ function _paintCanvas(ctx, w, h) {
     	_paintSequence(ctx, x - _boxSizePlus1 * seqBlocks[seqBlockIndex - 1].length, y, seqBlocks[seqBlockIndex - 1] || []);
     
     if (x + seqWidth < w && seqBlockIndex < seqBlocks.length - 1)
-    	_paintSequence(ctx, x + seqWidth, y, seqBlocks[seqBlockIndex + 1] || [])
-
-   	// paint the highlighter after everything else is painted.
-   	_paintMouseHighlighter(ctx, w, h);
+    	_paintSequence(ctx, x + seqWidth, y, seqBlocks[seqBlockIndex + 1] || [])	
 }
+
 
 var twoPI = 2.0 * Math.PI;
 var bgCircles = [];
@@ -227,24 +243,46 @@ var upper = 12;
 
 var _piByCurve = Math.PI / curve;
 var _upperBy2 = upper >> 1;
+var _marginPlusCurve = margin + curve;
 
 var senseCoords = function(x) { //returns y-coordinate along the path.
 	x += _boxSizeBy2;
 	var width = canvas.width;
+	var y = 0;
 	
 	if (x < margin || x > canvas.width - margin)
 		y = 0;
-	else if (x >= margin && x <= curve + margin)
+	else if (x >= margin && x <= _marginPlusCurve)
 		y = _upperBy2 * (1 - Math.cos((x - margin) * _piByCurve));
-	else if (width >= x + margin && width <= x + margin + curve)
-		y = _upperBy2 * (1 + Math.cos((x - width + curve + margin) * _piByCurve));
+	else if (width >= x + margin && width <= x + _marginPlusCurve)
+		y = _upperBy2 * (1 + Math.cos((x - width + _marginPlusCurve) * _piByCurve));
 	else
 		y = upper;
 	
 	return y;
 };
-
+var antisenseCoords = function(x) { //returns y-coordinate along the path.
+	x -= _boxSizeBy2;
+	var width = canvas.width;
+	var y = 0;
+	
+	if (x < margin || x > canvas.width - margin)
+		y = 0;
+	else if (x >= margin && x <= _marginPlusCurve)
+		y = _upperBy2 * (1 - Math.cos((x - margin) * _piByCurve));
+	else if (width >= x + margin && width <= x + _marginPlusCurve)
+		y = _upperBy2 * (1 + Math.cos((x - width + _marginPlusCurve) * _piByCurve));
+	else
+		y = upper;
+	
+	return y;
+};
 function _paintSequence(ctx, x, y, seq) {
+	var complement = [];
+	complement['A'] = complement['a'] = 'T';
+	complement['C'] = complement['c'] = 'G';
+	complement['G'] = complement['g'] = 'C';
+	complement['T'] = complement['t'] = 'A';
 	var x1 = x;
 	
 	// block separator
@@ -252,6 +290,7 @@ function _paintSequence(ctx, x, y, seq) {
 	
 	for (var i = 0; i < seq.length; i++) {
 		_paintNucleotide(ctx, seq[i].toUpperCase(), x1, y - senseCoords(x1));
+		_paintNucleotide(ctx, complement[seq[i]], x1, y + antisenseCoords(x1));
 		x1 += _boxSizePlus1;
 	}
 	
@@ -416,9 +455,13 @@ function onDragStart(event) {
 }
 
 function onClick(event) {
+	var offsets = canvas.getBoundingClientRect();
+	var x = event.clientX - offsets.left;
+	var y = event.clientY - offsets.top;
 	//TODO determine what element the mouse is over to display the appropriate info within the tooltip.
-	setTooltip("New Title - (" + event.clientX + "," + event.clientY + ")",
-			"<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
+	setTooltip("New Title - (" + x + "," + x + ")",
+			  "<em>" + getElementAt(x, y) + "</em>"
+			+ "<p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. "
 			+ "Ut sagittis pulvinar mattis. <i>Vestibulum eget condimentum turpis.</i><ol>"
 			+ "<li>Praesent posuere nulla in dolor rutrum</li><li>eget ultrices nibh laoreet</li> "
 			+ "<li>Suspendisse nunc erat</li><li>mollis non tempor sodales</li><li>mattis tincidunt diam</li></ol>"
@@ -429,6 +472,14 @@ function onClick(event) {
 			+ "Curabitur justo nisl, semper eget urna nec, aliquet vehicula sem. "
 			+ "In lacus lorem, fermentum nec suscipit ut, congue id enim. Cras sed lectus est.</p>"
 			+ "<p><a href=''>more info...</a></p>");
+}
+
+function getElementAt(x, y) {
+	//TODO process which frame or stand the position is at...
+	
+	var boxIndex = Math.floor(x / (boxSize + 1));
+	
+	return "boxIndex=" + boxIndex;
 }
 
 function resizeCanvas() {
@@ -487,7 +538,9 @@ function setTooltip(title, content) {
 	var tooltipTitle = document.getElementById("viewerTooltipTitle");
 	var tooltipContent = document.getElementById("viewerTooltipContent");
 	
-	if (tooltip === undefined || tooltipContent === undefined)
+	if (tooltip === undefined
+			|| tooltipTitle === undefined
+			|| tooltipContent === undefined)
 		return;
 	
 	if (tooltip.style.display === "none")
@@ -499,7 +552,6 @@ function setTooltip(title, content) {
 
 function hideTooltip() {
 	var tooltip = document.getElementById("viewerTooltip");
-	
 	if (tooltip !== undefined)
 		tooltip.style.display = "none";
 }
@@ -518,7 +570,9 @@ $(window).load( function() {
 	window.addEventListener("resize", resizeCanvas, false);
 	window.addEventListener("orientationchange", resizeCanvas, false);
 	
-	document.getElementById("viewerTooltipCloseButton").addEventListener("click", hideTooltip, true);
+	var ttCloseBtn = document.getElementById("viewerTooltipCloseButton");
+	if (ttCloseBtn !== undefined)
+		ttCloseBtn.addEventListener("click", hideTooltip, true);
 	
 	setTimeout(requestSequence(0), 500);
 });

@@ -41,6 +41,13 @@ nucleotideRNA2DNA_Map["u"] = nucleotideRNA2DNA_Map["U"] = "T";
 /**
  * Constructor for a new instance of the NucleotideSequence with the specified
  * information.
+ * 
+ * @param id  the Number unique identifier in the database.
+ * @param name  the organism's name that the sequence belongs to.
+ * @param blocksize  the Number length of each memory block containing the 
+ *                   portions of the full nucleotide sequence.
+ * @param blockcount  the Number of memory block required to hold the full 
+ *                    nucleotide sequence.
  */
 function NucleotideSequence(id, name, blocksize, blockcount) {
 	this.id = id;
@@ -173,7 +180,7 @@ function getComplementSequence(originalSeq) {
 
 
 
-var charSize = 8; // number of bits in a character
+var charSize = 16; // number of bits in a character
 
 function pack(bytes) {
     var chars = [];
@@ -184,40 +191,43 @@ function pack(bytes) {
     map['t'] = map['T'] = 
     map['u'] = map['U'] = 3;
     
-    console.log("pack length " + bytes.length);
-    chars.push(bytes.length);
-    for(var i = 0; i < bytes.length; i+=2) {
-    	for (var b = 2, packed = 0; b <= charSize && i < bytes.length; b+=2)
-    		packed = (map[bytes[i++]] << (charSize - b)) | packed;
-    	chars.push(packed);
+    var len = bytes.length;
+    chars.push((len >> 24) & 0xFF);
+    chars.push((len >> 16) & 0xFF);
+    chars.push((len >> 8) & 0xFF);
+    chars.push(len & 0xFF);
+    var b = 0;
+    var bit = charSize - 2;
+    for (var c = 0; c < bytes.length; c++) {
+    	b |= (map[bytes.charAt(c)] << bit);
+    	if (bit ==0) {
+    		chars.push(b);
+    		bit = charSize;
+    		b = 0;
+    	}
+    	bit -= 2;
     }
+    
+    if (b != 0)
+    	chars.push(b)
+    	
     return String.fromCharCode.apply(null, chars);
 }
 
-function unpack(str, map) {
+function unpack(str, mapping) {
+	var bitShift = 2;
     var bytes = [];
-    var len = str[0].charCodeAt(0);
+    var c = 0;
+    var len = (str.charCodeAt(c++) << 24);
+    len += (str.charCodeAt(c++) << 16);
+    len += (str.charCodeAt(c++) << 8);
+    len += str.charCodeAt(c++);
     console.log("unpack[" + str + "], length " + len);
-    for (var i = 1; i < str.length && len >= 0; i++)
-        for (var b = 2, char = str.charCodeAt(i); b <= charSize && len >= 0; len--, b+=2)
-        	bytes.push(map[(char >> (charSize - b)) & 3]);
+    while (c < str.length) {
+    	var bit = charSize - bitShift;
+    	for (var b = str.charCodeAt(c++); len > 0 && bit >= 0; len--, bit -= bitShift)
+    		bytes.push(mapping[(b >> bit) & 3]);
+    }
     console.log("    =>[" + bytes.join("") + "]");
     return bytes.join("");
 }
-/*public static final String unpack(byte[] bytes, char[] mapping) {
-	int bitShift = Integer.SIZE - Integer.numberOfLeadingZeros(mapping.length - 1);
-	StringBuilder sb = new StringBuilder();
-	ByteBuffer bb = ByteBuffer.wrap(bytes);
-	
-	int len = bb.getInt();
-	while (bb.hasRemaining()) {
-		int bit = Byte.SIZE - bitShift;
-		for (byte b = bb.get(); len > 0 && bit >= 0; len--, bit -= bitShift) {
-			sb.append(mapping[(b >> bit) & 3]);
-		}
-	}
-	
-	bb.clear();
-	return sb.toString();
-}
-*/
