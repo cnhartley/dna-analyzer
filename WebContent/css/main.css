@@ -1,0 +1,130 @@
+@CHARSET "UTF-8";
+
+/**
+ * Header styles
+ */
+header {
+    padding: 1em;
+    color: #FFFFFF;
+    background-color: #004499;
+    border-bottom: 1px solid #EEEEEE;
+}
+header h1 { /* title */
+    font-size: 2em;
+    font-weight: bold;
+    margin: 0;
+}
+header h1 a, header h1 a:link, header h1 a:visited {
+	color: inherit;
+	text-decoration: none;
+}
+header h2 { /* sub title */
+    font-size: 1em;
+    font-weight: normal;
+    margin: 0;
+}
+header div#versionInfo {
+   position: fixed;
+   top: 0.2em;
+   right: 0.2em;
+   color: #63ADD0;
+   font-size: 0.75em;
+   font-family: "Courier New", Courier, monospace;
+}
+
+/**
+ * Nav style section and links
+ */
+nav {
+	left: 0;
+	right: 0;
+    border-top: 1px solid #999999;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 2px solid #999999;
+    background-color: #CCCCCC;
+    margin-bottom: 0.5em;
+}
+nav ol {
+	left:0;
+	right:0;
+    padding: 0;
+    margin: 0.25em 1em;
+    list-style-type: none;
+    display: block;
+	overflow: hidden;
+}
+nav ol li {
+	float: left;
+    display: inline-block;
+    padding: 0em 0.5em;
+}
+nav ol li a {
+    text-decoration: none;
+    color: #444499;
+    cursor: pointer;
+}
+nav ol li a:ACTIVE {
+}
+nav ol li a:FOCUS, nav ol li a:HOVER {
+	text-decoration: underline;
+    color: #2222FF;
+}
+nav span {
+	float: right;
+	font-size: 1em;
+}
+
+
+footer {
+    clear: both;
+    padding: 1em;
+    color: #444444;
+    background-color: #FFFFFF;
+    font-size: 0.75em;
+}
+
+section {
+	padding: 0.25em;
+	margin: 0.25em;
+	display: inline-block;
+	min-width: 300px;
+	max-width: 600px;
+	font-family: "Arial", Sans Serif;
+	border-top: 1px solid #EEEEEE;
+	float: left;
+}
+section:first-of-type {
+	border-top: 0;
+}
+section h1 {
+	padding-top: 0;
+	padding-bottom: inherit;
+	margin-top: 0;
+	margin-bottom: inherit;
+}
+section h1 + h2 {
+	padding: 0;
+	margin: 0;
+}
+section h2 {
+	padding-bottom: inherit;
+}
+section img {
+	display: inline-block;
+}
+ol, ul {
+	margin-left: 2em;
+}
+
+details {
+	padding: 0em 1em;
+	margin: 1em;
+}
+details summary {
+	padding: 0;
+	margin-left: -1em;
+	font-weight: bold;
+	font-size: 1.25em;
+}
+
