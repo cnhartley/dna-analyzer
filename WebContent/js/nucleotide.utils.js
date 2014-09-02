@@ -1,6 +1,7 @@
 /**
  * 
  */
+var d = 1.25;
 
 var nucleotideFill = new Array();
 nucleotideFill["a"] = nucleotideFill["A"] = '#00BB00';
@@ -209,7 +210,7 @@ function pack(bytes) {
     }
     
     if (b != 0)
-    	chars.push(b)
+    	chars.push(b);
     	
     return String.fromCharCode.apply(null, chars);
 }
