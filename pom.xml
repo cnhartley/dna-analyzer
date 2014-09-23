@@ -1,121 +1,158 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.dnaa.webapp</groupId>
-	<artifactId>dnaa.core</artifactId>
-	<version>0.0.1-SNAPSHOT</version>
-	<packaging>war</packaging>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  
+  <groupId>com.dnaa.core</groupId>
+  <artifactId>dnaa-parent</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  
+  <name>DNA Analyzer</name>
+  <description>DNA Analyzer application provides a graphical user interface (GUI) for representing Deoxyribonucleic Acid (DNA) or Ribonucleic Acid (RNA) sequences. Modules that are included in this application are; PAM Score analysis and comparison between sequences, Amino Acids and Proteins that the sequence can manufacture, and extended details on those compounds.</description>
+  <url>https://github.com/cnhartley/dna-analyzer</url>
+  
+  <organization>
+    <name>California Polytechnic State University</name>
+    <url>http://www.calpoly.edu</url>
+  </organization>
+  
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <distribution>manual</distribution>
+      <comments>A business-friendly OSS license</comments>
+    </license>
+  </licenses>
+  
+  <developers>
+    <developer>
+      <id>cnhartle</id>
+      <name>Christopher N. Hartley</name>
+      <email>cnhartle@calpoly.edu, chrisnhartley@gmail.com</email>
+      <url>https://www.linkedin.com/in/christophernhartley</url>
+      <organization>California Polytechnic State University</organization>
+      <organizationUrl>https://www.csc.calpoly.edu/</organizationUrl>
+      <roles>
+        <role>lead program engineer</role>
+        <role>design lead</role>
+        <role>architect</role>
+        <role>developer</role>
+      </roles>
+      <timezone>-8</timezone>
+    </developer>
+  </developers>
+  
+  <contributors>
+    <contributor>
+      <name>Dr. Franz J. Kurfess</name>
+      <email>fkurfess@calpoly.edu</email>
+      <url>https://www.csc.calpoly.edu/faculty/fkurfess/</url>
+      <organization>California Polytechnic State University</organization>
+      <organizationUrl>https://www.csc.calpoly.edu/</organizationUrl>
+      <roles>
+        <role>advisor</role>
+        <role>user interface domain expert</role>
+      </roles>
+      <timezone>-8</timezone>
+    </contributor>
+  </contributors>
+  
+  <inceptionYear>2014</inceptionYear>
+  
+  <modules>
+  	<module>dnaa-webapp</module>
+  	<module>dnaa-server</module>
+  	<module>dnaa-common</module>
+  	<module>dnaa-sitedoc</module>
+  </modules>
+  
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <java.compiler.version>1.7</java.compiler.version>
+    
+    <properties.maven.plugin.version>1.0-alpha-2</properties.maven.plugin.version>
+  </properties>
+  
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>com.google.code.maven-replacer-plugin</groupId>
+          <artifactId>maven-replacer-plugin</artifactId>
+          <version>1.4.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.codehaus.mojo</groupId>
+          <artifactId>properties-maven-plugin</artifactId>
+          <version>${properties.maven.plugin.version}</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <source>${java.compiler.version}</source>
+          <target>${java.compiler.version}</target>
+        </configuration>
+      </plugin>
 
-	<developers>
-		<developer>
-			<id>cnhartley</id>
-			<name>Christopher N. Hartley</name>
-			<email>cnhartle@calpoly.edu, chrisnhartley@gmail.com</email>
-			<url>https://www.linkedin.com/in/christophernhartley</url>
-			<organization>California Polytechnic State University</organization>
-			<organizationUrl>https://www.csc.calpoly.edu/</organizationUrl>
-			<roles>
-				<role>architect</role>
-				<role>designer</role>
-				<role>developer</role>
-			</roles>
-			<timezone>-8</timezone>
-		</developer>
-	</developers>
-	<contributors>
-		<contributor>
-			<name>Dr. Franz J. Kurfess</name>
-			<email>fkurfess@calpoly.edu</email>
-			<url>https://www.csc.calpoly.edu/faculty/fkurfess/</url>
-			<organization>California Polytechnic State University</organization>
-			<organizationUrl>https://www.csc.calpoly.edu/</organizationUrl>
-			<roles>
-				<role>advisor</role>
-				<role>user interface domain expert</role>
-			</roles>
-			<timezone>-8</timezone>
-		</contributor>
-	</contributors>
-	
-	<build>
-		<finalName>dnaa</finalName>
-		<directory>target</directory>
-		<outputDirectory>target/classes</outputDirectory>
-		<testOutputDirectory>target/test-classes</testOutputDirectory>
-		<sourceDirectory>src/main/java</sourceDirectory>
-		<scriptSourceDirectory>src/main/scripts</scriptSourceDirectory>
-		<testSourceDirectory>src/test/java</testSourceDirectory>
-		<resources>
-			<resource>
-				<directory>src/main/resources</directory>
-			</resource>
-		</resources>
-		<testResources>
-			<testResource>
-				<directory>src/test/resources</directory>
-			</testResource>
-		</testResources>
-		
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>3.0</version>
-				<configuration>
-					<source>1.7</source>
-					<target>1.7</target>
-				</configuration>
-			</plugin>
-			
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-war-plugin</artifactId>
-				<version>2.4</version>
-				<configuration>
-					<webResources>
-						<resource>
-							<filtering>true</filtering>
-							<directory>WebContent</directory>
-							<includes>
-								<include>**/web.xml</include>
-							</includes>
-						</resource>
-					</webResources>
-					<warSourceDirectory>WebContent</warSourceDirectory>
-					<webXml>WebContent/WEB-INF/web.xml</webXml>
-				</configuration>
-			</plugin>
-		</plugins>
-	</build>
-	
-	<name>DNA Analyzer</name>
-	<url>https://github.com/cnhartley/dna-analyzer</url>
-	<description>This software provides a graphical user interface (GUI) for representing Deoxyribonucleic Acid (DNA) or Ribonucleic Acid (RNA) sequences. Modules that are included in this application are; PAM Score analysis and comparison between sequences, Amino Acids and Proteins that the sequence can manufacture, and extended details on those compounds.</description>
-	<inceptionYear>2014</inceptionYear>
-	<organization>
-		<name>California Polytechnic State University</name>
-	</organization>
-	<dependencies>
-		<dependency>
-			<groupId>junit</groupId>
-			<artifactId>junit</artifactId>
-			<version>4.11</version>
-			<!-- scope>test</scope -->
-		</dependency>
-		<dependency>
-			<groupId>asm</groupId>
-			<artifactId>asm</artifactId>
-			<version>3.3.1</version>
-		</dependency>
-		<dependency>
-			<groupId>com.sun.jersey</groupId>
-			<artifactId>jersey-bundle</artifactId>
-			<version>1.18.1</version>
-		</dependency>
-		<!-- dependency>
-			<groupId>net.sf.json-lib</groupId>
-			<artifactId>json-lib</artifactId>
-			<version>2.4</version>
-		</dependency -->		
-		
-	</dependencies>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-war-plugin</artifactId>
+        <configuration>
+          <!--warSourceDirectory>WebContent</warSourceDirectory-->
+          <failOnMissingWebXml>false</failOnMissingWebXml>
+          <archiveClasses>true</archiveClasses>
+          <attachClasses>true</attachClasses>
+          <archive>
+            <addMavenDescriptor>false</addMavenDescriptor>
+            <manifest>
+              <addClasspath>true</addClasspath>
+            </manifest>
+          </archive>
+          <webResources>
+            <resource>
+              <directory>src/main/webapp</directory>
+              <filtering>true</filtering>
+              <includes>
+                <include>index.html</include>
+                <include>index.jsp</include>
+              </includes>
+            </resource>
+          </webResources>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+    
+  <dependencies>
+	<dependency>
+		<groupId>asm</groupId>
+		<artifactId>asm</artifactId>
+		<version>3.3.1</version>
+	</dependency>
+  	<dependency>
+  		<groupId>com.sun.jersey</groupId>
+  		<artifactId>jersey-bundle</artifactId>
+  		<version>1.18.1</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.json</groupId>
+  		<artifactId>json</artifactId>
+  		<version>20140107</version>
+  	</dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.11</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
 </project>
