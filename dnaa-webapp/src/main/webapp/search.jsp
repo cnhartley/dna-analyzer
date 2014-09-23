@@ -8,6 +8,15 @@
 <link rel="stylesheet" type="text/css"  href="./css/dnaa-forms.css"></link>
 <style type="text/css">
 
+section {
+    width: 800px;
+    max-width: 800px;
+}
+
+form {
+    width: 100%;
+}
+
 form fieldset table {
 	width: 100%;
 }
@@ -37,26 +46,39 @@ form fieldset table tbody tr:nth-child(even) {
     background-color: #ffffff;
 }
 
+form fieldset ul {
+    width: 100%;
+    padding: 0;
+    margin: 0;
+}
+form fieldset ul li {
+    padding: 0;
+    margin: 0;
+}
 
-form fieldset ul li input[type=text] ~ input[type=submit] ~ label {
+form fieldset ul li > label[for="criteria"] {
+    padding: 0.25em;
+    margin: 0.25em 0em;
+    display: inline-block;
+    float: none;
+    min-width: 6em;
+}
+
+form fieldset ul li > input[id="criteria"] {
 	padding: 0.25em;
 	margin: 0.25em 0em;
     display: inline-block;
-    float: left;    
+    float: none;
+    min-width: 5em;
+    max-width: 100%;
 }
-form fieldset ul li input[type=submit] ~ label ~ input[type=text] {
-    padding: 0.25em;
-	margin: 0.25em 0em;
-    width: 100%;
-    height: inherit;
-    display: inline-block;
-    float: right;    
-}
-form fieldset ul li label ~ input[type=text] ~ input[type=submit] {
+
+form fieldset ul li > input[type=submit] {
     padding: 0.25em;
 	margin: 0.25em 0em;
     display: inline-block;
-    float: right;    
+    float: right;
+    min-width: 8em;
 }
 
 </style>
@@ -94,8 +116,7 @@ $(document).ready(function() {
 function processSearchResults(json) {
 	var i = 0,
 	    match = {},
-	    prop = {},
-	    results = "";//"<span>Search results for <em>\"" + json.criteria + "\"</em></span><table>";
+	    results = "";
 	
 	if (json.matches) {
 		while (i < json.matches.length) {
@@ -109,7 +130,6 @@ function processSearchResults(json) {
 			results += "</tr>";
 		}
 	}
-	//results += "</table>";
 	
 	$("#results").html(results);
 }
@@ -143,7 +163,7 @@ function processSearchResults(json) {
 						<th>Created On</th>
 					</tr>
 				</thead>
-				<tbody id="results" name="results">
+				<tbody id="results">
 					<tr><td colspan="5"><em>[no search results]</em></td></tr>
 				</tbody>
 			</table>
