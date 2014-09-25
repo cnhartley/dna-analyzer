@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+
+  <!-- Simple type definitions -->
+  
+  <xs:simpleType name="nameType">
+    <xs:restriction base="xs:string"></xs:restriction>
+  </xs:simpleType>
+  
+  <xs:simpleType name="shortStringType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z][a-zA-Z]{2}" />
+    </xs:restriction>
+  </xs:simpleType>
+  
+  <xs:simpleType name="singleLetterType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[a-zA-Z]{1}" />
+    </xs:restriction>
+  </xs:simpleType>
+  
+  <xs:simpleType name="codonType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[A-Z]{3}" />
+    </xs:restriction>
+  </xs:simpleType>
+  
+  <xs:simpleType name="flagType">
+    <xs:restriction base="xs:string">
+      <xs:pattern value="[Ss][Tt]([Oo][Pp]|[Aa][Rr][Tt])" />
+    </xs:restriction>
+  </xs:simpleType>
+  
+  <!-- Complex type definitions -->
+  
+  <xs:complexType name="aminoAcidType">
+    <xs:sequence>
+      <xs:element name="name" type="nameType" />
+      <xs:element name="short" type="shortStringType" />
+      <xs:element name="symbol" type="singleLetterType" />
+      <xs:element name="flag" type="flagType" minOccurs="0"/>
+      <xs:element name="codon" type="codonType" minOccurs="1" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+  
+  <xs:complexType name="aminoAcidsType">
+    <xs:sequence>
+      <xs:element name="aminoacid" type="aminoAcidType" minOccurs="1" maxOccurs="unbounded" />
+    </xs:sequence>
+  </xs:complexType>
+  
+  <!-- The root type for the library -->
+  
+  <xs:element name="aminoacids" type="aminoAcidsType" />
+  
+</xs:schema>

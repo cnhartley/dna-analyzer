@@ -27,7 +27,9 @@ import org.json.JSONObject;
 public class DatabaseInterface implements DatabaseQueries {
 	
 	private static final String _DB_PROPERTIES_FILENAME = "db.properties";
+	private static final String encoding = "UTF-8";
 	private static Connection dbc = null;
+	
 
 	/**
 	 * 
@@ -295,40 +297,49 @@ public class DatabaseInterface implements DatabaseQueries {
 	}
 	
 	
-	public static Object/*SequenceBlock*/ getSequenceBlock(final int id, final int index) throws SQLException {
+	public static JSONObject/*SequenceBlock*/ getSequenceBlock(final int id, final long index) throws SQLException {
 		verifyConnection();
 		
-		PreparedStatement stmt = dbc.prepareStatement(SELECT_USER_INFO_BY_LOGIN);
+		PreparedStatement stmt = dbc.prepareStatement(SELECT_SEQUENCE_BLOCK_BY_ID_AND_INDEX);
 		stmt.setInt(1, id);
 		stmt.setLong(2, index);
 
 		ResultSet rs = stmt.executeQuery();
+		JSONObject json = new JSONObject();
 		if (rs != null && rs.next()) {
 			try {
-				return readFully(rs.getBinaryStream(0), "UTF-8");
-			} catch (IOException e) {
+				json.put("id", id);
+				json.put("charset", encoding);
+				json.put("length", rs.getInt("length"));
+				json.put("block", readFully(rs.getBinaryStream("data"), encoding));
+			}
+			catch (SQLException | IOException e) {
 				e.printStackTrace();
+				json.put("error", e.getMessage());
 			}
 		}
-		return null;
+		return json;
 	}
-	
-	private static String readFully(InputStream inputStream, String encoding)
-	        throws IOException
-	{
-	    return new String(readFully(inputStream), encoding);
-	}    
 
-	private static byte[] readFully(InputStream inputStream)
+
+	private static String readFully(InputStream in, String encoding)
 	        throws IOException
 	{
-	    ByteArrayOutputStream baos = new ByteArrayOutputStream();
-	    byte[] buffer = new byte[1024];
+		final int bufferSize = 4096;
+	    ByteArrayOutputStream out = new ByteArrayOutputStream(bufferSize);
+	    byte[] buffer = new byte[bufferSize];
 	    int length = 0;
-	    while ((length = inputStream.read(buffer)) != -1) {
-	        baos.write(buffer, 0, length);
+	    while ((length = in.read(buffer)) != -1) {
+	        out.write(buffer, 0, length);
 	    }
-	    return baos.toByteArray();
+	    try {
+	    	in.close();
+	    } catch (Exception ignore) { }
+	    try {
+	    	out.close();
+	    } catch (Exception ignore) { }
+
+	    return new String(out.toByteArray());
 	}
 
 	private final static void verifyConnection() throws SQLException {

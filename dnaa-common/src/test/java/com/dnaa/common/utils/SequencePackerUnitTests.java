@@ -41,7 +41,8 @@ public class SequencePackerUnitTests {
 	 * A c T G  T c A T  G G G A  c t g C  a T G c  a a a T  g G G C  C c t a  A a G A  a C A C  A C T T 
 	 * 00011110 11010011 10101000 01111001 00111001 00000011 10101001 01011100 00001000 00010001 00011111
 	 * x1E      xD3      xA8      x79      x39      x03      xA9      x5C      x08      x11      x1F
-	 * 30       -45      -88      121      57       3        -87      92       8        17       31
+	 * 30       -45(211) -88(168) 121      57       3        -87(169) 92       8        17       31
+	 * ▲        ╙        ¿        y        9        ♥        ⌐        \        ◘        ◄        ▼
 	 * (byte.length=11)
 	 * 
 	 * length=44 => x00 x00 x00 x2C

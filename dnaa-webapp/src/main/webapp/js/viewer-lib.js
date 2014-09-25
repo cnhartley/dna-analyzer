@@ -144,6 +144,7 @@ var Viewer = {
 				};
 				
 				var _paintAminoAcid = function (chars, ctx, x, y) {
+					//console.log("AminoAcid=" + AminoAcidLib.get(chars));
 					ctx.beginPath();
 					ctx.rect(x, y, blockSizeX3, blockSize);
 					ctx.closePath();

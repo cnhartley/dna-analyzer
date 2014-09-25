@@ -24,9 +24,8 @@ header h2 { /* sub title */
     margin: 0;
 }
 header div#versionInfo {
-   position: fixed;
-   top: 0.2em;
-   right: 0.2em;
+   display: inline-block;
+   float: right;
    color: #63ADD0;
    font-size: 0.75em;
    font-family: "Courier New", Courier, monospace;

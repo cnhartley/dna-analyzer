@@ -1,5 +1,10 @@
 
-var testSequence = "ACGTAGCGATCGCATACGCTGCGAGCAGGCGCAATATACTATACGCGCCACGCAACGTAGCGATCGCATACGCTGCGAGCAGGCGCAATATACTATACGCGCCACGCAACGTAGCGATCGCATACGCTGCGAGCAGGCGCAATATACTATACGCGCCACGCAACGTAGCGATCGCATACGCTGCGAGCAGGCGCAATATACTATACGCGCCACGCAACGTAGCGATCGCATACGCTGCGAGCAGGCGCAATATACTATACGCGCCACGCAACGTAGCGATCGCATACGCTGCGAGCAGGCGCAATATACTATACGCGCCACGCA";
+if (Constants === undefined)
+	var Constants = {};
+
+Constants.SEQUENCE_LOADED     = 1;
+Constants.SEQUENCE_IS_LOADING = -1;
+Constants.SEQUENCE_NOT_LOADED = -2;
 
 /*
 var nucleotideDNA2RNA_Map = new Array(8);
@@ -18,101 +23,126 @@ nucleotideRNA2DNA_Map["u"] = nucleotideRNA2DNA_Map["U"] = "T";
 /**
  * Constructor for a new instance of the NucleotideSequence with the specified
  * information.
- * 
- * @param id            the Number unique identifier in the database.
- * @param name          the organism's name that the sequence belongs to.
- * @param isDNA         boolean value indicating if this sequence is DNA or RNA.
- * @param blocksize     [optional] the Number length of each memory block 
- *                      containing the portions of the full nucleotide sequence.
- * @param blockcount    [optional] the Number of memory block required to hold 
- *                      the full 
- *                      nucleotide sequence.
  */
-function NucleotideSequence(id, name, isDNA, blocksize, blockcount) {
-	this.id = id;
-	this.name = name;
-	this.length = 0;
-	this.isDNA = isDNA || false;
-	this.blockSize = blocksize || 0;
-	this.blockCount = blockcount || 0;
-	this.blockBuffer = [[]];
-	this.blockStartIndex = -1;
-	this.blockEndIndex = -1;
-	this.createdOn = new Date();
-	this.createdBy = "";
-	this.lastEditOn = new Date();
-	this.lastEditBy = "";
+var NucleotideSequence = {
+	id: -1,
+	organism: "",
+	length: 0,
+	isDNA: false,
+	blockSize: 4096,
+	blockCount: 0,
+	blockBuffer: [[]],
+	blockStartIndex: -1,
+	blockEndIndex: -1,
+	createdOn: new Date(),
+	createdBy: "",
+	lastEditOn: new Date(),
+	lastEditBy: "",
 	
-	this.nucleotideMap = this.isDNA ?
-			['A','C','G','T'] : ['A','C','G','U'];
-	
-	this.nucleotideComplementMap = this.isDNA ?
-			['T','G','C','A'] : ['U','G','C','A'];
-//};
+	nucleotideMap: [],
+	nucleotideComplementMap: [],
 
-/**
- * Returns an array of single characters representing the nucleotides in the 
- * specified range of the |index| to the |index| plus the |length|.
- * If the starting index plus the length is greater than the length of this 
- * nucleotide sequence then the resulting array will contain the nucleotides up
- * to the end of the sequence.
- * 
- * @param index  the starting index for the resulting subset of nucleotides
- *               for this instance of the nucleotide sequence.
- * @param length the maximum Number of nucleotides the resulting subset will
- *               contain of this nucleotide sequence.
- *               
- * @returns the resulting subset of nucleotides in the specified range.
- */
-//NucleotideSequence
-	this.subset = function (index, length) {
+	/**
+	 * Initialize this instance of the NucleotideSequence with the specified
+	 * parameters.
+	 * 
+	 * @param id            the Number unique identifier in the database.
+	 * @param organism      the organism's name that the sequence belongs to.
+	 * @param isDNA         boolean value indicating if this sequence is DNA or RNA.
+	 * @param length        total number of nucleotides this sequence contains.
+	 * @param blocksize     [optional] the Number length of each memory block 
+	 *                      containing the portions of the full nucleotide sequence.
+	 * @param blockcount    [optional] the Number of memory block required to hold 
+	 *                      the full 
+	 *                      nucleotide sequence.
+	 */
+	init: function(id, organism, isDNA, length, blockSize, blockCount) {
+		var BufferBlock = {
+			id: 0,  // block id from db field [dnaa.sequence_block.index]
+			length: 0,  // number of nucleotides in [this.block]
+			startIndex: 0,
+			endIndex: 0, // == startIndex + length
+			compression: [],
+			charset: 'UTF-8',
+			status: Constants.SEQUENCE_NOT_LOADED, // Constants.(SEQUENCE_NOT_LOADED|SEQUENCE_IS_LOADING|SEQUENCE_LOADED)
+			block: {}, // after any decompression!
+		};
+		
+		this.id = id;
+		this.organism = organism;
+		this.isDNA = isDNA || true;
+		this.nucleotideMap = this.isDNA ?
+				['A','C','G','T'] : ['A','C','G','U'];
+		this.nucleotideComplementMap = this.isDNA ?
+				['T','G','C','A'] : ['U','G','C','A'];
+		this.length = length;
+		this.blockSize = blockSize || ((1 << 16) - 1); // 16,536 indexes
+		console.log("length="+ this.length + ", blockSize=" + this.blockSize);
+		this.blockCount = Math.min(5, Math.ceil(this.length / this.blockSize));//blockCount || 5;
+		this.blockBuffer = new Array(this.blockCount);
+		for (var b = 0; b < this.blockBuffer.length; b++)
+			this.blockBuffer[b] = Object.create(BufferBlock);
+	},
+
+	/**
+	 * Returns an array of single characters representing the nucleotides in the 
+	 * specified range of the |index| to the |index| plus the |length|.
+	 * If the starting index plus the length is greater than the length of this 
+	 * nucleotide sequence then the resulting array will contain the nucleotides up
+	 * to the end of the sequence.
+	 * 
+	 * @param index  the starting index for the resulting subset of nucleotides
+	 *               for this instance of the nucleotide sequence.
+	 * @param length the maximum Number of nucleotides the resulting subset will
+	 *               contain of this nucleotide sequence.
+	 *               
+	 * @returns the resulting subset of nucleotides in the specified range.
+	 */
+	subset: function (index, length) {
 		if (index < 0 || index >= this.length || length == 0)
 			return [];
 		
-		var endIndex = Math.min(index + length, this.length),
+		var endIndex = Math.min(index + length, this.length) - 1,
 		    set = [];
 		
 		while (index <= endIndex)
 			set.push(this.nucleotideAt(index++));
 		
 		return set;
-	};
+	},
 
-/**
- * Returns the single character representation for the specified nucleotide at
- * the given sequence index. For DNA sequences this returns one of the 
- * ['A','C','G','T'] based on the code at the specified |index|, or for RNA this
- * returns one of the ['A','C','G','U'] based on the code.
- * 
- * @param index the index within the nucleotide sequence as a single character
- *              representation.
- * 
- * @returns a single character representing the nucleotide at the specified 
- *          index within this instance.
- */
-//NucleotideSequence
-	this.nucleotideAt = function (index) {
+	/**
+	 * Returns the single character representation for the specified nucleotide at
+	 * the given sequence index. For DNA sequences this returns one of the 
+	 * ['A','C','G','T'] based on the code at the specified |index|, or for RNA this
+	 * returns one of the ['A','C','G','U'] based on the code.
+	 * 
+	 * @param index the index within the nucleotide sequence as a single character
+	 *              representation.
+	 * 
+	 * @returns a single character representing the nucleotide at the specified 
+	 *          index within this instance.
+	 */
+	nucleotideAt: function (index) {
 		return this.nucleotideMap[this.get(index)];
-	};
+	},
 
-/**
- * 
- * @param index 
- * @returns  
- */
-//NucleotideSequence
-	this.complementNucleotideAt = function (index) {
+	/**
+	 * 
+	 * @param index 
+	 * @returns  
+	 */
+	complementNucleotideAt: function (index) {
 		return this.nucleotideComplementMap[this.get(index)];
-	};
+	},
 
-/**
- * 
- * @param nucleotide
- * @returns a single character representing the nucleotide at the specified 
- *          index within this instance.
- */
-//NucleotideSequence
-	this.complementFor = (function (nucleotide) {
+	/**
+	 * 
+	 * @param nucleotide
+	 * @returns a single character representing the nucleotide at the specified 
+	 *          index within this instance.
+	 */
+	complementFor: (function (nucleotide) {
 		var comp = new Array(10);
 		comp['a'] = comp['A'] = 0;
 		comp['c'] = comp['C'] = 1;
@@ -121,88 +151,165 @@ function NucleotideSequence(id, name, isDNA, blocksize, blockcount) {
 		comp['u'] = comp['U'] = 3;
 		
 		return function (nucleotide) { return this.nucleotideComplementMap[comp[nucleotide]]; };
-	})();
+	})(),
 
-/**
- * Returns the nucleotide code [0,1,2,3] for the specified |index| within the 
- * cached blocks of nucleotides. The nucleotide code correspond to the 2-bit 
- * value representing the nucleotide: [b00,b01,b10,b11] in binary.
- * 
- * @param index 
- * 
- * @returns the nucleotide code at the specified index in the range from
- *          [0 .. 3].
- */
-//NucleotideSequence
-	this.get = function (index) {
-		if (!this.isCachedIndex(index))
-			this.loadBlockContaining(index);
+	/**
+	 * Returns the nucleotide code [0,1,2,3] for the specified |index| within the 
+	 * cached blocks of nucleotides. The nucleotide code correspond to the 2-bit 
+	 * value representing the nucleotide: [b00,b01,b10,b11] in binary.
+	 * 
+	 * @param index 
+	 * 
+	 * @returns the nucleotide code at the specified index in the range from
+	 *          [0 .. 3].
+	 */
+	get: function (index) {
+		if (index < 0 ||index >= this.length)
+			throw "Index out of range: [0 to " + (this.length - 1) + "] .get(" + index + ")";
 		
-		var bi = index - this.blockStartIndex;
+		if (!this.isCachedIndex(index))
+			this.getBlockContaining(index);
+		
+		var i = Math.floor(index / (this.blockSize << 2));
+		var val = -1;
 		
 		//TODO not correct yet...
-		return this.n2m[this.blockBuffer[0][bi]];
-	};
-	//TODO need to remove n2m map!
-	this.n2m = new Array(10);
-	this.n2m['a'] = this.n2m['A'] = 0;
-	this.n2m['c'] = this.n2m['C'] = 1;
-	this.n2m['g'] = this.n2m['G'] = 2;
-	this.n2m['t'] = this.n2m['T'] = 3;
-	this.n2m['u'] = this.n2m['U'] = 3;
+		switch (this.blockBuffer[i].status) {
+		case Constants.SEQUENCE_LOADED:
+			var charIndex = (index - this.blockBuffer[i].startIndex) >> 2;
+			var shift = ((index - this.blockBuffer[i].startIndex) % 4) << 1;
+			var char = this.blockBuffer[i].block.charCodeAt(charIndex);
+			val = (char >> (6 - shift)) & 3;
+			break;
+			
+		case Constants.SEQUENCE_IS_LOADING:
+			console.error("Still loading sequence block buffer for index " + index);
+			break;
+			
+		case Constants.SEQUENCE_NOT_LOADED:
+			console.error("Sequence block buffer has no requests to load for index " + index);
+			break;
+			
+		default:
+			console.error("Unknown status for the sequence block buffer: "
+					+ this.blockBuffer[0].status);
+		}
+		
+		return val;
+	},
 	
-/**
- * Returns a boolean value if the specified |index| is contained in the cached
- * blocks for the sequence.
- * 
- * @param index 
- * 
- * @returns {Boolean}
- */
-//NucleotideSequence
-	this.isCachedIndex = function (index) {
+	/**
+	 * Returns a boolean value if the specified |index| is contained in the cached
+	 * blocks for the sequence.
+	 * 
+	 * @param index 
+	 * 
+	 * @returns {Boolean}
+	 */
+	isCachedIndex: function (index) {
 		return index >= this.blockStartIndex && index <= this.blockEndIndex;
-	};
+	},
 
-/**
- * Loads the cached memory blocks that include the specified |index| containing
- * and surrounding the main sequence block.
- * 
- * @param index
- */
-//NucleotideSequence
-	this.loadBlockContaining = function (index) {
+	/**
+	 * 
+	 * @parma block
+	 */
+	loadBlock: function (block, index, json) {
+		if (block.id != index)
+			throw "load block index id does not match the returned block index!";
+		
+		var seq = json.block.substr(4);
+		console.log("seq=" + seq + " --> " + unpack(json.block, ['A','C','G','T']));
+		
+		block.length = json.length;
+		block.startIndex = 0; //TODO need to update database to hold start index as well...
+		block.endIndex = block.startIndex + block.length;
+		block.status = Constants.SEQUENCE_LOADED;
+		block.block = seq; //json.block;
+		
+		dumpBlockBuffer(block);
+	},
+	
+	/**
+	 * Loads the cached memory blocks that include the specified |index| containing
+	 * and surrounding the main sequence block.
+	 * 
+	 * @param index
+	 */
+	getBlockContaining: function (index) {
+		var blockBufferIndex = 0; // TODO get next available block buffer index...
+		var blockIndex = Math.floor(index / this.blockSize) + 1;
+		var request = function (block, completedFn) {
+			var protocol = "http://",
+			    host = "localhost",
+			    port = ":" + 8080,
+			    criteria = blockIndex + "," + index,
+			    service = "/dnaa/services/sequences/" + criteria,
+			    params = { };
+		
+			console.log(" --> sequence block for: '" + criteria + "' from: " + protocol + host + port + service);
+			$.ajax({
+				type:		'GET',
+				url:		protocol + host + port + service,
+				data:		params,
+				dataType:	'json',
+				encode:		true,
+			})
+			.done(function(json) {
+				console.log(" <-- sequence returned: " + json);
+				completedFn(block, blockIndex, json);
+			});
+		};
+		
+		// copy fields over and update!
+		/*
+		 * { id: 0,  // block id from db field [dnaa.sequence_block.index]
+			length: 0,  // number of nucleotides in [this.block]
+			startIndex: 0,
+			endIndex: 0, // == startIndex + length
+			compression: [],
+			charset: 'UTF-8',
+			status: Constants.SEQUENCE_NOT_LOADED, // Constants.(SEQUENCE_NOT_LOADED|SEQUENCE_IS_LOADING|SEQUENCE_LOADED)
+			block: {},*/
+		this.blockBuffer[blockBufferIndex] = {
+				id: blockIndex, // block id from db field [dnaa.sequence_block.index]
+				status: Constants.SEQUENCE_IS_LOADING,
+				length: this.blockSize,
+				charset: 'UTF-8',
+				compression: null,
+				block: null,
+		};
+		request(this.blockBuffer[blockBufferIndex], this.loadBlock);
+		
 		//TODO get the block from the database containing the specified index...
-		var seq = testSequence.split("");
-		this.blockBuffer[0] = seq; //[]; TODO for testing
+		//var seq = testSequence.split("");
 		this.blockCount = 1;
 		this.blockStartIndex = 0;
-		this.blockEndIndex = seq.length;
-		this.blockSize = seq.length;
-		this.length = seq.length;
+		this.blockEndIndex = 44;
+		this.blockSize = 11;
+		this.length = 44;
 		
 		console.log("loading block containing " + index + ": block=[" + this.blockBuffer[0] + "]");
-	};
+	},
 
-/**
- * Clears the cached memory blocks for this instance of the nucleotide sequences
- * and resets the block indices. This should be followed by a new get(index) 
- * call to build the memory block around that index.
- */
-//NucleotideSequence
-	this.clear = function () {
+	/**
+	 * Clears the cached memory blocks for this instance of the nucleotide sequences
+	 * and resets the block indices. This should be followed by a new get(index) 
+	 * call to build the memory block around that index.
+	 */
+	clear: function () {
 		this.blockBuffer = [[]];
 		this.blockCount = 0;
 		this.blockSize = 0;
 		this.blockEndIndex = 0;
 		this.blockStartIndex = 0;
-	};
+	},
 
-/**
- * Inner object for drawing the nucleotide sequence as an UI element.
- */
-//NucleotideSequence.prototype
-	this.ui = {
+	/**
+	 * Inner object for drawing the nucleotide sequence as an UI element.
+	 */
+	ui: {
+		
 		fill: (function () {
 			var f = new Array(10);
 			f["a"] = f["A"] = '#00BB00';
@@ -239,17 +346,22 @@ function NucleotideSequence(id, name, isDNA, blocksize, blockcount) {
 			return function (char,x,y,s) { return p[char] ? p[char](x,y,s) : u(x,y,s); };
 		})(),
 		
+		/**
+		 * Returns the color for the text of the specified character.
+		 */
 		text: function (char) {
 			return '#FFFFFF';
 		},
-	};
+
+	},
+
 };
 
 
 ///////////////////////////////////////////////////////////////////////////////
 
 
-var charSize = 16; // number of bits in a character
+var charSize = 8; // number of bits in a character
 
 function pack(bytes) {
     var chars = [];
@@ -294,8 +406,9 @@ function unpack(str, mapping) {
     console.log("unpack[" + str + "], length " + len);
     while (c < str.length) {
     	var bit = charSize - bitShift;
-    	for (var b = str.charCodeAt(c++); len > 0 && bit >= 0; len--, bit -= bitShift)
+    	for (var b = str.charCodeAt(c++); len > 0 && bit >= 0; len--, bit -= bitShift) {
     		bytes.push(mapping[(b >> bit) & 3]);
+    	}
     }
     console.log("    =>[" + bytes.join("") + "]");
     return bytes.join("");

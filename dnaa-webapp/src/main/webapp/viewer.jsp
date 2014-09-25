@@ -26,6 +26,25 @@ if (sequenceInfo == null) {
 	<script type="text/javascript" src="./js/amino-acid-lib.js"></script>
 	<script type="text/javascript">
 
+function dumpSequence(sequence) {
+	console.log("sequence={");
+    console.log("  id=" + sequence.id);
+    console.log("  organism=" + sequence.organism);
+    console.log("  isDNA=" + sequence.isDNA);
+    console.log("  length=" + sequence.length);
+    console.log("  blockBuffer=" + sequence.blockBuffer);
+    for (var block = 0; block < sequence.blockBuffer.length; block++) {
+        dumpBlockBuffer(sequence.blockBuffer[block]);
+    }
+    console.log("}");
+}
+function dumpBlockBuffer(blockBuffer) {
+	console.log("    block=" + blockBuffer);
+    for (var prop in blockBuffer) {
+        console.log("      prop=" + prop + " -> " + blockBuffer[prop]);
+    }
+}
+
 var viewer1 = {},
     leftSpan = {},
     rightSpan = {};
@@ -34,13 +53,17 @@ function init() {
 	var viewer1CanvasId = "viewer1",
 	    leftSpanId = "leftSpan",
 	    rightSpanId = "rightSpan",
-	    sequence = new NucleotideSequence(
+	    sequence = Object.create(NucleotideSequence);
+	    sequence.init(
 			"<%=sequenceInfo.getInt("id") %>",
 			"<%=sequenceInfo.getString("organism") %>",
-			true);
+			<%=sequenceInfo.getBoolean("isDNA") ? "true" : "false" %>,
+		    <%=sequenceInfo.getLong("length") %>
+		);
 	
 	sequence.get(0); // cause the nucleotide sequence to start caching
 		             // at the begining of the sequence.
+	dumpSequence(sequence);
 	
 	view1 = Object.create(Viewer);
 	view1.init(viewer1CanvasId);
@@ -70,7 +93,7 @@ $(window).ready( function () {
 	console.log("window loaded!");
 	view1.repaint();
 	
-	AminoAcidLib.load("aminoacids.xml");//, completedFn, errorFn, statusFn);
+	AminoAcidLib.load("./xml/aminoacids.xml");//, completedFn, errorFn, statusFn);
 });
 
 	</script>

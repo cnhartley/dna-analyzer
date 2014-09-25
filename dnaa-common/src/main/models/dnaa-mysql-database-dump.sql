@@ -80,15 +80,16 @@ DROP TABLE IF EXISTS `sequence_blocks`;
 /*!40101 SET @saved_cs_client     = @@character_set_client */;
 /*!40101 SET character_set_client = utf8 */;
 CREATE TABLE `sequence_blocks` (
-  `id` int(11) NOT NULL,
+  `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `sequence_info_id` int(10) unsigned NOT NULL,
-  `length` mediumtext NOT NULL,
-  `index` mediumtext NOT NULL,
-  `data` varchar(4095) NOT NULL,
+  `length` int(10) unsigned NOT NULL,
+  `index` int(10) unsigned NOT NULL DEFAULT '0',
+  `data` varbinary(4096) NOT NULL,
   PRIMARY KEY (`id`,`sequence_info_id`),
+  UNIQUE KEY `id_UNIQUE` (`id`),
   KEY `fk_sequence_blocks_sequence_info1_idx` (`sequence_info_id`),
   CONSTRAINT `fk_sequence_blocks_sequence_info1` FOREIGN KEY (`sequence_info_id`) REFERENCES `sequence_info` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8 COLLATE=utf8_bin;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -97,7 +98,37 @@ CREATE TABLE `sequence_blocks` (
 
 LOCK TABLES `sequence_blocks` WRITE;
 /*!40000 ALTER TABLE `sequence_blocks` DISABLE KEYS */;
+INSERT INTO `sequence_blocks` VALUES (1,1,44,0,'\0\0\0,Ó¨y9©\\');
 /*!40000 ALTER TABLE `sequence_blocks` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `sequence_full_view`
+--
+
+DROP TABLE IF EXISTS `sequence_full_view`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!40101 SET character_set_client = utf8 */;
+CREATE TABLE `sequence_full_view` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
+  `sequence_info_id` int(10) unsigned NOT NULL,
+  `width` int(11) NOT NULL,
+  `height` int(11) NOT NULL,
+  `image` varbinary(32767) DEFAULT NULL,
+  PRIMARY KEY (`id`,`sequence_info_id`),
+  UNIQUE KEY `id_UNIQUE` (`id`),
+  KEY `fk_sequence_full_view_sequence_info1_idx` (`sequence_info_id`),
+  CONSTRAINT `fk_sequence_full_view_sequence_info1` FOREIGN KEY (`sequence_info_id`) REFERENCES `sequence_info` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `sequence_full_view`
+--
+
+LOCK TABLES `sequence_full_view` WRITE;
+/*!40000 ALTER TABLE `sequence_full_view` DISABLE KEYS */;
+/*!40000 ALTER TABLE `sequence_full_view` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -113,11 +144,13 @@ CREATE TABLE `sequence_info` (
   `name` varchar(45) DEFAULT NULL,
   `organism` varchar(80) DEFAULT NULL,
   `create_time` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `length` bigint(20) unsigned zerofill NOT NULL DEFAULT '00000000000000000000',
+  `isDNA` bit(1) NOT NULL DEFAULT b'1',
   PRIMARY KEY (`id`,`user_id`),
   UNIQUE KEY `id-sequence-info_UNIQUE` (`id`),
   KEY `fk_sequence-info_user_idx` (`user_id`),
   CONSTRAINT `fk_sequence-info_user` FOREIGN KEY (`user_id`) REFERENCES `user` (`id`) ON DELETE NO ACTION ON UPDATE NO ACTION
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -126,6 +159,7 @@ CREATE TABLE `sequence_info` (
 
 LOCK TABLES `sequence_info` WRITE;
 /*!40000 ALTER TABLE `sequence_info` DISABLE KEYS */;
+INSERT INTO `sequence_info` VALUES (1,1,'Somelatinname','Longname Testsequence','2014-09-23 17:02:18',00000000000000000044,'');
 /*!40000 ALTER TABLE `sequence_info` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -194,10 +228,6 @@ INSERT INTO `user_subscription` VALUES (1,1,4,'2014-09-20 04:17:41',NULL),(2,2,2
 UNLOCK TABLES;
 
 --
--- Dumping routines for database 'dnaa'
---
-
---
 -- Final view structure for view `current_users_view`
 --
 
@@ -225,4 +255,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2014-09-22 18:14:03
+-- Dump completed on 2014-09-25 12:36:28
