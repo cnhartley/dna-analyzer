@@ -11,30 +11,40 @@ var AminoAcidLib = {
 	 * three character sequence of a nucleotide sequence.
 	 */
 	get: function (codon) {
-
 		//console.log("get(" + codon + ") from this.aminoacid=" + this.aminoacid + ", this.codons=" + this.codons);
+		var index = this.getIndexForCodon(codon);
+		//console.log(" --> index=" + index);
+		if (index >= 0 && index < this.codons.length) {
+			// handle parameter as index number
+			return this.aminoacid[this.codons[index]];
+		}
+		else {
+			;//console.error("codon not found for " + codon);
+			return undefined;
+		}
+	},
+	
+	getIndexForCodon: (function () {
 		var index = -1,
 			map = new Array();
-		
+	
 		map['a'] = map['A'] = 0;
 		map['c'] = map['C'] = 1;
 		map['g'] = map['G'] = 2;
 		map['t'] = map['T'] = 
 		map['u'] = map['U'] = 3;
 		
-		if (isNaN(codon) && codon.length == 3) {
-			index = (map[codon.charAt(0)] << 4)
-					| (map[codon.charAt(1)] << 2)
-					| map[codon.charAt(2)];
-		}
-		
-		if (index > 0 && index < this.codons.length) {
-			// handle parameter as index number
-			return this.aminoacid[this.codons[codon]];
-		}
-		else
-			;//console.error("codon not found for " + codon);
-	},
+		return function (codon) {
+			if (isNaN(codon) && codon.length == 3) {
+				index = (map[codon.charAt(0)] << 4)
+				      | (map[codon.charAt(1)] << 2)
+				      |  map[codon.charAt(2)];
+				return index;
+			}
+			else
+				return -1;
+		};
+	})(),
 	
 	/**
 	 * Loads the file from the specified URL. The file should follow the correct
@@ -44,11 +54,10 @@ var AminoAcidLib = {
 	load: function (url, completedFn, errorFn, statusFn) {
 		completedFn = completedFn || this.loadData;
 		var xmlHttp = {},
-			codons = [], codon,
-			aminos = [],
-			index = 0,
+			codon,
 			i = 0, nodes = [], node = {},
-			map = new Array();
+			map = new Array(),
+			self = this;
 		
 		map['a'] = map['A'] = 0;
 		map['c'] = map['C'] = 1;
@@ -66,26 +75,22 @@ var AminoAcidLib = {
 				
 				nodes = doc.getElementsByTagName('aminoacid');
 				for (i = 0; i < nodes.length; i++) {
-					aminos[i] = {};
-					
 					var n = nodes[i].getElementsByTagName('*');
 					for (node = 0; node < n.length; node++) {
-						if (n[node])
+						if (n[node]) {
 							if (n[node].nodeName == "codon") {
 								codon = n[node].firstChild.nodeValue;
-								index = (map[codon.charAt(0)] << 4)
-								      | (map[codon.charAt(1)] << 2)
-								      |  map[codon.charAt(2)];
-								console.log("codon=" + codon + ", index=" + index);
-								codons[index] = i;
+								self.codons[self.getIndexForCodon(codon)] = i;
 							}
-							else
-								aminos[i][n[node].nodeName] = n[node].firstChild.nodeValue;
+							else {
+								if (self.aminoacid[i] === undefined)
+									self.aminoacid[i] = {};
+								self.aminoacid[i][n[node].nodeName] = n[node].firstChild.nodeValue;
+								console.log("aminoacid[" + i + "][" + n[node].nodeName + "] = " + n[node].firstChild.nodeValue);
+							}
+						}
 					}
 				}
-				
-				if (completedFn)
-					completedFn(aminos, codons);
 			}
 			//TODO else if (error) { if (errorFn) errorFn(this); }
 		};
@@ -93,15 +98,38 @@ var AminoAcidLib = {
 		xmlHttp.send();
 	},
 	
-	loadData: function (aList, cList) {
-		console.log("data loaded! aList=" + aList + ", cList=" + cList);
+	/**
+	 * Inner object for drawing the nucleotide sequence as an UI element.
+	 */
+	ui: {
 		
-		for (var i = 0; i < aList.length; i++)
-			this.aminoacid[i] = aList[i];
+		fill: (function () {
+			var f = new Array(6);
+			f['start'] = f['Start'] = f['START'] = '#66BB66';
+			f['stop']  = f['Stop']  = f['STOP']  = '#664444';
+			
+			return function (amino) { return amino.flag ? f[amino.flag] : '#AAAAAA'; };
+		})(),
 		
-		for (var i = 0; i < cList.length; i++)
-			this.codons[i] = cList[i];
+		stroke: (function () {
+			var l = new Array(6);
+			l['start'] = l['Start'] = l['START'] = '#002200';
+			l['stop']  = l['Stop']  = l['STOP']  = '#220000';
+			
+			return function (amino) { return amino.flag ? l[amino.flag] : '#666666'; };
+		})(),
 		
-		console.log("data loaded! this.aminoacid=" + this.aminoacid + ", this.codons=" + this.codons);
+		/**
+		 * Returns the color for the text of the specified character.
+		 */
+		text: (function () {
+			var c = new Array(6);
+			c['start'] = c['Start'] = c['START'] = '#DDFFDD';
+			c['stop']  = c['Stop']  = c['STOP']  = '#FFDDDD';
+			
+			return function (amino) { return amino.flag ? c[amino.flag] : '#DDDDDD'; };
+		})(),
+
 	},
+	
 };

@@ -143,21 +143,21 @@ var Viewer = {
 				    ctx.fillText(char, x + blockSizeBy2, y + blockSize - 2);
 				};
 				
-				var _paintAminoAcid = function (chars, ctx, x, y) {
-					//console.log("AminoAcid=" + AminoAcidLib.get(chars));
+				var _paintAminoAcid = function (codon, ctx, x, y) {
+					var aminoacid = AminoAcidLib.get(codon) || codon;
 					ctx.beginPath();
 					ctx.rect(x, y, blockSizeX3, blockSize);
 					ctx.closePath();
 					
-					ctx.fillStyle = '#AAAAAA';//seq.ui.fill(char);
+					ctx.fillStyle = AminoAcidLib.ui.fill(aminoacid);
 				    ctx.fill();
-				    ctx.strokeStyle = '#666666';//seq.ui.stroke(char);
+				    ctx.strokeStyle = AminoAcidLib.ui.stroke(aminoacid);
 				    ctx.stroke();
 				    
 				    // draw text...
-				    ctx.fillStyle = '#DDDDDD';//seq.ui.text(char);
+				    ctx.fillStyle = AminoAcidLib.ui.text(aminoacid);
 				    ctx.textAlign = "center";
-				    ctx.fillText(chars, x + (blockSizeX3 >> 1), y + blockSize - 2);
+				    ctx.fillText(aminoacid.short, x + (blockSizeX3 >> 1), y + blockSize - 2);
 				};
 				
 				var startIndex = 0,
