@@ -29,7 +29,7 @@ public class DatabaseInterface implements DatabaseQueries {
 	private static final String _DB_PROPERTIES_FILENAME = "db.properties";
 	private static final String encoding = "UTF-8";
 	private static Connection dbc = null;
-	
+
 
 	/**
 	 * 

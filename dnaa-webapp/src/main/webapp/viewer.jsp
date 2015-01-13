@@ -61,6 +61,8 @@ function init() {
 		    <%=sequenceInfo.getLong("length") %>
 		);
 	
+	AminoAcidLib.load("aminoacids.xml");//, completedFn, errorFn, statusFn);
+	
 	sequence.get(0); // cause the nucleotide sequence to start caching
 		             // at the begining of the sequence.
 	dumpSequence(sequence);
@@ -91,9 +93,7 @@ $(document).ready( function() {
 
 $(window).ready( function () {
 	console.log("window loaded!");
-	view1.repaint();
-	
-	AminoAcidLib.load("./xml/aminoacids.xml");//, completedFn, errorFn, statusFn);
+	setTimeout( function () { view1.repaint(); }, 250);
 });
 
 	</script>

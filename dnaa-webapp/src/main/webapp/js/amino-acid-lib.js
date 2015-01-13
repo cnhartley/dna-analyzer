@@ -51,7 +51,7 @@ var AminoAcidLib = {
 	 * XML schema for the amino acids library XML file type based on the
 	 * AminoAcidLibXMLSchema.xsd file.
 	 */
-	load: function (url, completedFn, errorFn, statusFn) {
+	load: function (fileName, completedFn, errorFn, statusFn) {
 		completedFn = completedFn || this.loadData;
 		var xmlHttp = {},
 			codon,
@@ -70,12 +70,12 @@ var AminoAcidLib = {
 			xmlHttp = new ActiveXObject("Microsoft.XMLHTTP");
 		
 		xmlHttp.onreadystatechange = function () {
+			var doc, n;
 			if (xmlHttp.readyState == 4 && xmlHttp.status == 200) {
-				var doc = xmlHttp.responseXML.documentElement;
-				
+				doc = xmlHttp.responseXML.documentElement;
 				nodes = doc.getElementsByTagName('aminoacid');
 				for (i = 0; i < nodes.length; i++) {
-					var n = nodes[i].getElementsByTagName('*');
+					n = nodes[i].getElementsByTagName('*');
 					for (node = 0; node < n.length; node++) {
 						if (n[node]) {
 							if (n[node].nodeName == "codon") {
@@ -94,7 +94,11 @@ var AminoAcidLib = {
 			}
 			//TODO else if (error) { if (errorFn) errorFn(this); }
 		};
-		xmlHttp.open('GET', url, true);
+		var protocol = "http://",
+		    host = "localhost",
+		    port = ":" + 8080,
+		    service = "/dnaa/services/xml/" + fileName;
+		xmlHttp.open('GET', protocol + host + port + service, true);
 		xmlHttp.send();
 	},
 	
